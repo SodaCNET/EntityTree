@@ -1,9 +1,11 @@
 # EntityTree
 Per eseguire l'applicazione in modalità di sviluppo eseguire i seguenti passaggi:
 
-1. Clonare questo repository in locale
+1. Clonare questo repository in locale:
+   
+   [https://github.com/SodaCNET/EntityTree.git](https://github.com/SodaCNET/EntityTree.git)
 
-3. Installa le dipendenze del progetto:
+2. Installa le dipendenze del progetto:
 
     - Apri il terminale nella directory del repository locale.
 
@@ -11,7 +13,7 @@ Per eseguire l'applicazione in modalità di sviluppo eseguire i seguenti passagg
     
       ### `npm install`
 
-4. Avvia l'applicazione:
+3. Avvia l'applicazione:
 
     - Dopo aver installato le dipendenze, esegui il comando per avviare l'applicazione:
     
