@@ -15,7 +15,6 @@ import Alert from '@mui/material/Alert';
 const useStyles = makeStyles((theme) => ({
   button: {
     marginTop: '15px',
-    marginRight: '20px',
     alignSelf: 'center', // Assicurati che i pulsanti siano allineati verticalmente al centro
   },
   root: {
@@ -927,8 +926,7 @@ const Tree = () => {
   return (
     <div ref={treeRef} className={classes.root} >
       <div className={classes.buttonGroup} >
-        <div className={classes.header}>        
-          <div>
+        <div className={classes.header}>                  
             {/* Upload e Export JSON qui */}
             <input
               accept=".json"
@@ -945,7 +943,7 @@ const Tree = () => {
             <Button variant="contained" color="primary" className={classes.button} onClick={exportToJson}>
               Export
             </Button>
-          </div>
+          
           <Typography variant="contained" className={classes.title}>
             EntityTree
           </Typography>
@@ -963,7 +961,6 @@ const Tree = () => {
               style={{ display: 'flex', justifyContent: 'center' }}
             />
           </div>
-          <div>
             <Button variant="contained" color="primary" onClick={handleSearch} className={classes.button}>
               Go to
             </Button>
@@ -977,7 +974,6 @@ const Tree = () => {
             <Button variant="contained" color="secondary" className={classes.button} onClick={HandleCloseAllNodes}>
               Close All Nodes
             </Button>
-          </div>
         </div>
       </div>
       <Snackbar open={snackbarOpen} autoHideDuration={2500} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'left' }}>
