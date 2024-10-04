@@ -1058,14 +1058,13 @@ const Tree = () => {
                           borderRadius: '8px', // Aggiunta per arrotondare gli angoli
                         }}
                       >
-                        {fk.parentName}
+                      z {fk.parentName}
                       </Button>
                     </Tooltip>
                   ))}
                 </span>
               </div>
             ),
-
           })}
           indentWidth={30}
         />
