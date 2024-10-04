@@ -14,20 +14,27 @@ import Alert from '@mui/material/Alert';
 
 const useStyles = makeStyles((theme) => ({
   button: {
-    marginTop: '5px',
+    marginTop: '15px',
     marginRight: '20px',
-    fontSize: '0.9em', // Riduci la dimensione del testo
-    padding: '6px 12px', // Riduci il padding per rendere i pulsanti più piccoli
     alignSelf: 'center', // Assicurati che i pulsanti siano allineati verticalmente al centro
   },
   root: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
     justifyContent: 'center',
     height: '100vh',
     margin: '0px',
     background: '#009960',
+    overflow: 'hidden',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: '0 20px',
+    boxSizing: 'border-box',
+    flexWrap: 'wrap', // Permette di andare a capo su schermi piccoli
   },
   title: {
     marginBottom: '0px',
@@ -44,17 +51,25 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '0.9em',
     marginRight: '20px', // Aumenta lo spazio a destra
     alignSelf: 'center', // Assicurati che la barra di ricerca sia allineata verticalmente al centro
+    [theme.breakpoints.down('sm')]: {
+      width: '90%', // Adatta la larghezza su dispositivi mobili
+      marginRight: '0px', // Rimuovi il margine a destra su dispositivi mobili
+    },
   },
   buttonGroup: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: '0px',
+    marginBottom: '5px',
     marginTop: '5px',
     gap: '10px',
     flexWrap: 'wrap',
     '& button': {
       transition: 'all 0.3s ease',
       fontSize: '0.9em', // Riduci la dimensione del testo
+    },
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '0.8em', // Riduci ulteriormente la dimensione del testo su dispositivi mobili
+      padding: '4px 8px', // Riduci ulteriormente il padding su dispositivi mobili
     },
   },
   treeContainer: {
@@ -87,11 +102,9 @@ const useStyles = makeStyles((theme) => ({
   },
   legendLine: {
     display: 'flex',
-    alignItems: 'center',
   },
   legendContainer: {
     display: 'flex',
-    alignItems: 'center',
     backgroundColor: 'white',
     padding: '10px', // Aggiungi padding per armonizzare con gli altri elementi
     borderRadius: '5px',
@@ -100,12 +113,18 @@ const useStyles = makeStyles((theme) => ({
     marginTop: '0px',
     flexWrap: 'wrap',
     marginRight: '20px',
-    marginLeft: '20px', // Aumenta lo spazio a destra
     alignSelf: 'center', // Assicurati che la leggenda sia allineata verticalmente al centro
+    [theme.breakpoints.down('sm')]: {
+      width: '90%', // Adatta la larghezza su dispositivi mobili
+      marginRight: '0px', // Rimuovi il margine a destra su dispositivi mobili
+    },
   },
   legendText: {
     fontSize: '1em', // Riduci la dimensione del testo
     marginRight: '10px',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '0.8em', // Riduci ulteriormente la dimensione del testo su dispositivi mobili
+    },
   },
   customTooltip: {
     backgroundColor: 'lightgrey',
@@ -653,11 +672,25 @@ const Tree = () => {
 
 
   const scrollToNode = useCallback((nodeId) => {
-    if (treeContainerRef.current) {
-      const nodeElement = treeContainerRef.current.querySelector(`[data-node-id="${nodeId}"]`);
-      if (nodeElement) {
-        nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+    const scrollStep = 100; // Altezza in pixel per ogni scroll
+    const scrollInterval = 100; // Intervallo di tempo in millisecondi tra ogni scroll
+  
+    const scrollContainer = treeContainerRef.current;
+  
+    if (scrollContainer) {
+      const intervalId = setInterval(() => {
+        const nodeElement = scrollContainer.querySelector(`[data-node-id="${nodeId}"]`);
+        if (nodeElement) {
+          nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          clearInterval(intervalId);
+        } else {
+          scrollContainer.scrollBy(0, scrollStep);
+          // Verifica se è stato raggiunto il fondo del contenitore
+          if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight) {
+            clearInterval(intervalId);
+          }
+        }
+      }, scrollInterval);
     }
   }, []);
 
@@ -893,8 +926,8 @@ const Tree = () => {
 
   return (
     <div ref={treeRef} className={classes.root} >
-      <div container spacing={2} className={classes.buttonGroup} alignItems="center" justifyContent="flex-start">
-        <div item xs={12} style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div className={classes.buttonGroup} >
+        <div className={classes.header}>        
           <div>
             {/* Upload e Export JSON qui */}
             <input
@@ -917,7 +950,7 @@ const Tree = () => {
             EntityTree
           </Typography>
           <Legend />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             {/* Box di ricerca qui */}
             <Autocomplete
               options={searchOptions}
@@ -925,8 +958,9 @@ const Tree = () => {
               className={classes.searchBar}
               onChange={handleSearchChange}
               renderInput={(params) => <TextField {...params} variant="outlined" />}
-              getOptionSelected={(option, value) => option.id === value.id}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              //getOptionSelected={(option, value) => option.id === value.id}
+              variant="contained"
+              style={{ display: 'flex', justifyContent: 'center' }}
             />
           </div>
           <div>
@@ -953,6 +987,7 @@ const Tree = () => {
       </Snackbar>
       <div ref={treeContainerRef} className={classes.treeContainer} >
         <SortableTree
+          isVirtualized={true}
           treeData={filteredTreeData}
           onChange={newTreeData => {
             setTreeData(newTreeData);
