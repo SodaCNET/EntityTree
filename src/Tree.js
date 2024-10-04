@@ -601,18 +601,6 @@ const Tree = () => {
     }
   }
 
-  // function updateColorButton(nodeId) {
-  //   const rootNode = findNodeById(treeData, nodeId); // Assumendo che treeData sia lo stato che contiene i dati dell'albero
-  //   if (rootNode) {
-  //       // Determina il colore secondario appropriato
-  //       const secondaryColor = determineSecondaryColor(nodeId);
-  //       // Applica il colore secondario
-  //       applySecondaryColor(rootNode, secondaryColor);
-  //       setTreeData([...treeData]);
-  //   }
-  // }
-
-
   const handleRemoveAllColors = () => {
     const removeAllColors = (node) => ({
       ...node,
