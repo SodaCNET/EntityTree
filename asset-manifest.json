@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/EntityTree/static/css/main.1469d98c.css",
-    "main.js": "/EntityTree/static/js/main.c4fdabe6.js",
+    "main.js": "/EntityTree/static/js/main.342e78b3.js",
     "static/js/453.4fa57c93.chunk.js": "/EntityTree/static/js/453.4fa57c93.chunk.js",
     "index.html": "/EntityTree/index.html",
     "main.1469d98c.css.map": "/EntityTree/static/css/main.1469d98c.css.map",
-    "main.c4fdabe6.js.map": "/EntityTree/static/js/main.c4fdabe6.js.map",
+    "main.342e78b3.js.map": "/EntityTree/static/js/main.342e78b3.js.map",
     "453.4fa57c93.chunk.js.map": "/EntityTree/static/js/453.4fa57c93.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.1469d98c.css",
-    "static/js/main.c4fdabe6.js"
+    "static/js/main.342e78b3.js"
   ]
 }
