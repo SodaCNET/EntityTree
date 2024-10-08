@@ -88,7 +88,8 @@ const useStyles = makeStyles((theme) => ({
     width: '15px',
     borderRadius: '50%',
     display: 'inline-block',
-    marginRight: '5px',
+    marginLeft: '7px',
+    marginRight: '2px'
   },
   blueDot: {
     backgroundColor: 'blue',
@@ -261,55 +262,33 @@ const getTotalDescendants = (node) => {
 const Tree = () => {
   const classes = useStyles();
   const [treeData, setTreeData] = useState([]);
+  const [filteredTreeData, setFilteredTreeData] = useState([]);
   const [searchOptions, setSearchOptions] = useState([]);
-  const [selectedNode, setSelectedNode] = useState(null);
   const [highlightedNodeId, setHighlightedNodeId] = useState(null);
   const nodeRefs = useRef({});
   const treeContainerRef = useRef(null);
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarMessage, setSnackbarMessage] = React.useState('');
-  const [hiddenstate, setHiddenState] = useState(false);
-  const [nomeBottoneCheck, setNomeBottone] = useState('Nascondi ✔');
-  const [showNodes, setShowNodes] = useState(true);
   const treeRef = useRef(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const [filterText, setFilterText] = useState('');
 
   useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
+    setFilteredTreeData(filterTree(treeData, filterText));
+  }, [treeData, filterText]);
+
+  const handleTreeChange = (newTreeData) => {
+    setTreeData(newTreeData);
+  };
 
   useEffect(() => {
-    if (isMounted) {
-      const node = treeRef.current;
-      if (node) {
-        // Esegui operazioni sul nodo DOM
-      }
-    }
-  }, [isMounted]);
-
-  function handleNomeBottoneCheck() {
-    setShowNodes(!showNodes);
-  }
-
-  const MostraNascondiNodi = () => {
-    if (hiddenstate) {
-      setHiddenState(false);
-      setNomeBottone('Nascondi ✔');
-      handleNomeBottoneCheck()
-      return;
-    } else {
-      setHiddenState(true);
-      setNomeBottone('Mostra ✔');
-      handleNomeBottoneCheck()
-      return;
-    }
-  }
+    // Popola le opzioni di ricerca con i titoli dei nodi
+    const options = treeData.map(node => ({ title: node.title, id: node.id }));
+    setSearchOptions(options);
+  }, [treeData]);
 
 
   useEffect(() => {
     if (treeContainerRef.current) {
-      console.log('treeContainerRef:', treeContainerRef.current);
       // Qui puoi accedere a treeContainerRef.current per manipolare l'elemento del DOM
     }
   }, []);
@@ -317,6 +296,10 @@ const Tree = () => {
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
+    if (!file) {
+      // L'utente ha premuto "Annulla", esci dalla funzione
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (event) => {
       const data = JSON.parse(event.target.result);
@@ -328,9 +311,6 @@ const Tree = () => {
   };
 
   const exportToJson = () => {
-    if (hiddenstate) {
-      MostraNascondiNodi()
-    }
     const userName = prompt('Inserisci il tuo nome utente:');
     const now = new Date();
     const year = now.getFullYear();
@@ -602,14 +582,16 @@ const Tree = () => {
   }
 
   const handleRemoveAllColors = () => {
-    const removeAllColors = (node) => ({
-      ...node,
-      color: null,
-      children: node.children ? node.children.map(removeAllColors) : [],
-    });
+    if (window.confirm('Sei sicuro di voler rimuovere tutti i colori?')) {
+      const removeAllColors = (node) => ({
+        ...node,
+        color: null,
+        children: node.children ? node.children.map(removeAllColors) : [],
+      });
 
-    const newTreeData = treeData.map(removeAllColors);
-    setTreeData(newTreeData);
+      const newTreeData = treeData.map(removeAllColors);
+      setTreeData(newTreeData);
+    }
   };
 
   useEffect(() => {
@@ -624,10 +606,16 @@ const Tree = () => {
         }
       }
     };
-    generateOptions(treeData);
+    generateOptions(filteredTreeData);
     setSearchOptions(options);
-  }, [treeData]);
+  }, [treeData, filterText, filteredTreeData]);
 
+  const handleFilterTextChange = (event) => {
+    setFilterText(event.target.value);
+    if (!event.target.value || event.target.value === '') {
+      setFilteredTreeData(treeData);
+    }
+  };
 
   const HandleCloseAllNodes = useCallback(() => {
     const closeAllNodes = (node) => ({
@@ -685,7 +673,6 @@ const Tree = () => {
     HandleCloseAllNodes();
 
     setTimeout(() => {
-      setSelectedNode(value);
 
       if (value === null) {
         setHighlightedNodeId(null);
@@ -695,28 +682,15 @@ const Tree = () => {
         if (value.path) {
           const newTreeData = expandPathNodes(treeData, value.path);
           setTreeData(newTreeData);
+
+          setTimeout(() => {
+            scrollToNode(value.id);
+          }, 100); // Attendi che l'albero si espanda prima di scorrere al nodo
         }
       }
     }, 100);
-  }, [treeData, HandleCloseAllNodes, expandPathNodes]);
+  }, [treeData, HandleCloseAllNodes, expandPathNodes, scrollToNode]);
 
-
-
-  const handleSearch = useCallback(() => {
-    if (selectedNode) {
-      const path = selectedNode.path;
-      const nodeId = selectedNode.id;
-
-      // Espandi i nodi lungo il percorso
-      const newTreeData = expandPathNodes(treeData, path);
-      setTreeData(newTreeData);
-
-      // Scorri fino al nodo selezionato dopo un breve ritardo
-      setTimeout(() => {
-        scrollToNode(nodeId);
-      }, 100);
-    }
-  }, [selectedNode, treeData, expandPathNodes, scrollToNode]);
 
   // Gestire l'evento di click sulla foreign key
   const handleForeignKeyClick = (node, nodeId, foreignParentId) => {
@@ -880,35 +854,45 @@ const Tree = () => {
     });
   };
 
-  // Funzione per filtrare i nodi nascosti
-  function filterHiddenNodes(nodes) {
-    return nodes
-      .filter(node => !node.hidden) // Filtra i nodi nascosti
-      .map(node => ({
-        ...node,
-        children: filterHiddenNodes(node.children) // Applica ricorsivamente ai figli
-      }));
-  }
+  // Funzione per filtrare l'albero
+  const filterTree = (nodes, filterText) => {
+    const filteredNodes = [];
 
-  // Funzione per gestire il click sul tasto mostra/nascondi
-  function handleToggleVisibility(nodeId) {
-    const toggleNodeVisibility = (nodes) => {
-      return nodes.map(node => {
-        if (node.id === nodeId) {
-          return { ...node, hidden: !node.hidden };
+    const filterRecursive = (node, parentPath = []) => {
+      const newNode = { ...node, children: [] };
+      let match = node.title.toLowerCase().includes(filterText.toLowerCase());
+
+      if (node.children) {
+        for (const child of node.children) {
+          const filteredChild = filterRecursive(child, [...parentPath, newNode]);
+          if (filteredChild) {
+            newNode.children.push(filteredChild);
+            match = true;
+          }
         }
-        if (node.children) {
-          return { ...node, children: toggleNodeVisibility(node.children) };
-        }
-        return node;
-      });
+      }
+
+      if (match) {
+        return newNode;
+      }
+      return null;
     };
 
-    const updatedTreeData = toggleNodeVisibility(treeData);
-    setTreeData(updatedTreeData);
-  }
+    for (const node of nodes) {
+      const filteredNode = filterRecursive(node);
+      if (filteredNode) {
+        filteredNodes.push(filteredNode);
+      }
+    }
 
-  const filteredTreeData = showNodes ? treeData : filterHiddenNodes(treeData);
+    return filteredNodes;
+  };
+
+  // Aggiorna l'albero filtrato ogni volta che cambia il testo di ricerca o l'albero completo
+  useEffect(() => {
+    setFilteredTreeData(filterTree(treeData, filterText));
+  }, [treeData, filterText]);
+
 
 
   return (
@@ -931,31 +915,35 @@ const Tree = () => {
             <Button variant="contained" color="primary" className={classes.button} onClick={exportToJson}>
               Export
             </Button>
-          
-          <Typography variant="contained" className={classes.title}>
-            EntityTree
-          </Typography>
-          <Legend />
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            {/* Box di ricerca qui */}
-            <Autocomplete
-              options={searchOptions}
-              getOptionLabel={(option) => option.title}
+            <Typography variant="contained" className={classes.title}>
+              EntityTree
+            </Typography>
+            <Legend />
+            <TextField
+              variant="outlined"
+              label="Filtra nodi"
+              value={filterText}
+              onChange={handleFilterTextChange}
               className={classes.searchBar}
-              onChange={handleSearchChange}
-              renderInput={(params) => <TextField {...params} variant="outlined" />}
-              //getOptionSelected={(option, value) => option.id === value.id}
-              variant="contained"
-              style={{ display: 'flex', justifyContent: 'center' }}
             />
-          </div>
-            <Button variant="contained" color="primary" onClick={handleSearch} className={classes.button}>
-              Go to
-            </Button>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              {/* Box di ricerca qui */}
+              <Autocomplete
+                options={searchOptions}
+                getOptionLabel={(option) => option.title}
+                className={classes.searchBar}
+                onChange={handleSearchChange}
+                renderInput={(params) => 
+                  <TextField
+                  {...params}
+                  label="Cerca nodi"
+                  variant="outlined" 
+                  />}
+                //getOptionSelected={(option, value) => option.id === value.id}
+                style={{ display: 'flex', justifyContent: 'center' }}
+              />
+            </div>
             {/* Remove All Colors e Close all nodes qui */}
-            <Button variant="contained" color="primary" className={classes.button} onClick={MostraNascondiNodi}>
-              {nomeBottoneCheck}
-            </Button>
             <Button variant="contained" color="secondary" className={classes.button} onClick={handleRemoveAllColors}>
               Remove All Colors
             </Button>
@@ -971,18 +959,14 @@ const Tree = () => {
       </Snackbar>
       <div ref={treeContainerRef} className={classes.treeContainer} >
         <SortableTree
-          isVirtualized={true}
+          isVirtualized={false}
           treeData={filteredTreeData}
-          onChange={newTreeData => {
-            setTreeData(newTreeData);
-          }}
+          onChange={handleTreeChange}
           canDrag={false}
           generateNodeProps={({ node, path }) => ({
             'data-node-id': node.id, // Aggiungi un attributo data per identificare il nodo
-            onClick: () => {
-              setSelectedNode({ id: node.id, path });
-            },
             style: {
+              display: node.hidden ? 'none' : 'block',
               boxShadow: node.id === highlightedNodeId ? '0px 0px 15px 10px rgba(100,245,180, 0.95)' : '',
               borderRadius: '10px', // Aggiunta per arrotondare gli angoli,
             },
@@ -1008,9 +992,6 @@ const Tree = () => {
                   color: getTotalDescendants(node) > 70 ? 'red' : getTotalDescendants(node) > 35 ? 'gold' : getTotalDescendants(node) > 5 ? '#EED202' : getTotalDescendants(node) > 0 ? 'green' : 'blue',
                 }}>
                   {getTotalDescendants(node)}
-                </span>
-                <span>
-                  <input type="checkbox" checked={node.hidden} onChange={(event) => { event.stopPropagation(); handleToggleVisibility(node.id); }} />
                 </span>
                 <div ref={el => nodeRefs.current[node.id] = el} data-node-id={node.id} style={{
                   backgroundColor: node.color,
@@ -1046,7 +1027,7 @@ const Tree = () => {
                           borderRadius: '8px', // Aggiunta per arrotondare gli angoli
                         }}
                       >
-                      z {fk.parentName}
+                       {fk.parentName}
                       </Button>
                     </Tooltip>
                   ))}
